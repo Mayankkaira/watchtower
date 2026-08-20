@@ -201,7 +201,6 @@ func (s *Store) GetUserByAPIKey(key string) (*User, error) {
 	return u, nil
 }
 
-// UpdateUser updates a user's name and email.
 func (s *Store) UpdateUser(userID int64, name, email string) (*User, error) {
 	_, err := s.db.Exec("UPDATE users SET name = ?, email = ? WHERE id = ?", name, email, userID)
 	if err != nil {
@@ -210,7 +209,6 @@ func (s *Store) UpdateUser(userID int64, name, email string) (*User, error) {
 	return s.GetUserByID(userID)
 }
 
-// DeleteUser permanently removes a user and all associated data (CASCADE).
 func (s *Store) DeleteUser(userID int64) error {
 	res, err := s.db.Exec("DELETE FROM users WHERE id = ?", userID)
 	if err != nil {
@@ -222,8 +220,6 @@ func (s *Store) DeleteUser(userID int64) error {
 	}
 	return nil
 }
-
-// --- Monitor CRUD ---
 
 func (s *Store) CreateMonitor(userID int64, name, url, mType string, interval int) (*Monitor, error) {
 	res, err := s.db.Exec(
@@ -280,7 +276,6 @@ func (s *Store) getMonitorByID(id int64) (*Monitor, error) {
 	return m, nil
 }
 
-// CountMonitorsByUser returns the total number of monitors for a user (for plan limit enforcement).
 func (s *Store) CountMonitorsByUser(userID int64) (int, error) {
 	var count int
 	err := s.db.QueryRow("SELECT COUNT(*) FROM monitors WHERE user_id = ?", userID).Scan(&count)

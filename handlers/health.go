@@ -14,11 +14,11 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	runtime.ReadMemStats(&mem)
 
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"status":      "healthy",
-		"uptime":      time.Since(startTime).String(),
-		"go_version":  runtime.Version(),
-		"goroutines":  runtime.NumGoroutine(),
-		"memory_mb":   mem.Alloc / 1024 / 1024,
+		"status":     "healthy",
+		"uptime":     time.Since(startTime).String(),
+		"go_version": runtime.Version(),
+		"goroutines": runtime.NumGoroutine(),
+		"memory_mb":  mem.Alloc / 1024 / 1024,
 	})
 }
 

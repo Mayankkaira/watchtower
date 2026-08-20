@@ -12,8 +12,7 @@ import (
 	"saas/store"
 )
 
-// maxBodyBytes limits request body size to prevent abuse.
-const maxBodyBytes = 1 << 20 // 1 MB
+const maxBodyBytes = 1 << 20
 
 type APIHandler struct {
 	store *store.Store
@@ -23,13 +22,11 @@ func NewAPIHandler(db *store.Store) *APIHandler {
 	return &APIHandler{store: db}
 }
 
-// GetProfile returns the current user's profile.
 func (h *APIHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(middleware.UserContextKey).(*store.User)
 	writeJSON(w, http.StatusOK, user)
 }
 
-// UpdateProfile updates the current user's name and email.
 func (h *APIHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(middleware.UserContextKey).(*store.User)
 
@@ -61,7 +58,6 @@ func (h *APIHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, updated)
 }
 
-// DeleteAccount permanently deletes the current user's account.
 func (h *APIHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(middleware.UserContextKey).(*store.User)
 	if err := h.store.DeleteUser(user.ID); err != nil {
@@ -71,7 +67,6 @@ func (h *APIHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "account deleted"})
 }
 
-// UpdatePlan upgrades/downgrades the user's subscription plan.
 func (h *APIHandler) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(middleware.UserContextKey).(*store.User)
 
@@ -102,7 +97,6 @@ func (h *APIHandler) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// CreateAPIKey generates a new API key for the user.
 func (h *APIHandler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(middleware.UserContextKey).(*store.User)
 
@@ -133,7 +127,6 @@ func (h *APIHandler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, apiKey)
 }
 
-// ListAPIKeys returns all API keys for the current user.
 func (h *APIHandler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(middleware.UserContextKey).(*store.User)
 	keys, err := h.store.GetAPIKeysByUser(user.ID)
@@ -147,7 +140,6 @@ func (h *APIHandler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, keys)
 }
 
-// DeleteAPIKey removes an API key.
 func (h *APIHandler) DeleteAPIKey(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(middleware.UserContextKey).(*store.User)
 
@@ -169,15 +161,12 @@ func (h *APIHandler) DeleteAPIKey(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "key deleted"})
 }
 
-// --- Monitor Handlers ---
-
 var monitorLimits = map[string]int{
 	"free":       5,
 	"pro":        50,
-	"enterprise": -1, // unlimited
+	"enterprise": -1,
 }
 
-// CreateMonitor adds a new monitor for the user.
 func (h *APIHandler) CreateMonitor(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(middleware.UserContextKey).(*store.User)
 
@@ -212,7 +201,6 @@ func (h *APIHandler) CreateMonitor(w http.ResponseWriter, r *http.Request) {
 		req.Interval = 60
 	}
 
-	// Enforce plan limits
 	limit := monitorLimits[user.Plan]
 	if limit >= 0 {
 		count, err := h.store.CountMonitorsByUser(user.ID)
@@ -236,7 +224,6 @@ func (h *APIHandler) CreateMonitor(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, monitor)
 }
 
-// ListMonitors returns all monitors for the current user.
 func (h *APIHandler) ListMonitors(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(middleware.UserContextKey).(*store.User)
 	monitors, err := h.store.GetMonitorsByUser(user.ID)
@@ -250,7 +237,6 @@ func (h *APIHandler) ListMonitors(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, monitors)
 }
 
-// DeleteMonitor removes a monitor.
 func (h *APIHandler) DeleteMonitor(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(middleware.UserContextKey).(*store.User)
 
@@ -272,7 +258,6 @@ func (h *APIHandler) DeleteMonitor(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "monitor deleted"})
 }
 
-// Dashboard returns usage stats.
 func (h *APIHandler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(middleware.UserContextKey).(*store.User)
 

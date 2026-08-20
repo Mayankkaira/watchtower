@@ -16,7 +16,6 @@ type contextKey string
 
 const UserContextKey contextKey = "user"
 
-// Logging logs every request with method, path, status, and duration.
 func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -36,7 +35,6 @@ func (w *statusWriter) WriteHeader(code int) {
 	w.ResponseWriter.WriteHeader(code)
 }
 
-// CORS handles Cross-Origin Resource Sharing headers.
 func CORS(allowedOrigins string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -54,11 +52,10 @@ func CORS(allowedOrigins string) func(http.Handler) http.Handler {
 	}
 }
 
-// Auth validates JWT tokens or API keys and injects the user into context.
 func Auth(authSvc *auth.Service, db *store.Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Try API key first
+
 			if apiKey := r.Header.Get("X-API-Key"); apiKey != "" {
 				user, err := db.GetUserByAPIKey(apiKey)
 				if err != nil {
@@ -70,7 +67,6 @@ func Auth(authSvc *auth.Service, db *store.Store) func(http.Handler) http.Handle
 				return
 			}
 
-			// Try Bearer token
 			header := r.Header.Get("Authorization")
 			if header == "" {
 				http.Error(w, `{"error":"missing authorization"}`, http.StatusUnauthorized)
@@ -100,7 +96,6 @@ func Auth(authSvc *auth.Service, db *store.Store) func(http.Handler) http.Handle
 	}
 }
 
-// RateLimit is a simple in-memory rate limiter per IP.
 func RateLimit(requestsPerMinute int) func(http.Handler) http.Handler {
 	type client struct {
 		count   int
@@ -109,7 +104,6 @@ func RateLimit(requestsPerMinute int) func(http.Handler) http.Handler {
 	var mu sync.Mutex
 	clients := make(map[string]*client)
 
-	// Periodically clean up expired entries to prevent unbounded map growth.
 	go func() {
 		for range time.Tick(5 * time.Minute) {
 			mu.Lock()
@@ -151,7 +145,6 @@ func RateLimit(requestsPerMinute int) func(http.Handler) http.Handler {
 	}
 }
 
-// RequirePlan checks if the authenticated user has one of the allowed plans.
 func RequirePlan(plans ...string) func(http.Handler) http.Handler {
 	allowed := make(map[string]bool, len(plans))
 	for _, p := range plans {
@@ -173,7 +166,6 @@ func RequirePlan(plans ...string) func(http.Handler) http.Handler {
 	}
 }
 
-// Chain applies middlewares in order.
 func Chain(h http.Handler, middlewares ...func(http.Handler) http.Handler) http.Handler {
 	for i := len(middlewares) - 1; i >= 0; i-- {
 		h = middlewares[i](h)

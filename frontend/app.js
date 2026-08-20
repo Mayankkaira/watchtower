@@ -1,12 +1,9 @@
-// Watchtower
-
 const API = '/api/v1';
 let currentUser = null;
 let monitors = [];
 let sslDomains = [];
 let incidents = [];
 
-// ===== ROUTING =====
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
@@ -15,7 +12,6 @@ function showPage(page) {
   if (page === 'profile') loadProfile();
 }
 
-// ===== TABS =====
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -29,7 +25,6 @@ function switchTab(tab) {
   if (tab === 'sla') renderSLAReport();
 }
 
-// ===== API =====
 async function api(method, path, body) {
   const headers = { 'Content-Type': 'application/json' };
   const token = localStorage.getItem('token');
@@ -43,7 +38,6 @@ async function api(method, path, body) {
   return data;
 }
 
-// ===== AUTH =====
 async function handleSignup(e) {
   e.preventDefault();
   const btn = document.getElementById('signup-btn');
@@ -100,7 +94,6 @@ function handleLogout() {
   showPage('landing');
 }
 
-// ===== DASHBOARD =====
 async function loadDashboard() {
   if (!currentUser) {
     try { currentUser = await api('GET', '/me'); }
@@ -115,7 +108,6 @@ async function loadDashboard() {
 async function loadMonitors() {
   try {
     const serverMonitors = await api('GET', '/monitors');
-    // Merge server monitors with demo data for a full-looking dashboard
     if (serverMonitors.length > 0) {
       monitors = serverMonitors;
     } else {
@@ -128,7 +120,6 @@ async function loadMonitors() {
   updateStats();
 }
 
-// ===== DEMO DATA =====
 function getDemoMonitors() {
   return [
     { id: 1, name: 'Production API', url: 'https://api.myapp.com/health', type: 'http', status: 'up', uptime: 99.98, response_time: 142, interval: 30, history: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] },
@@ -153,7 +144,6 @@ function loadDemoData() {
   ];
 }
 
-// ===== RENDER MONITORS =====
 function renderMonitors() {
   const el = document.getElementById('monitors-list');
   if (!monitors.length) {
@@ -200,7 +190,6 @@ function renderMonitorItem(m) {
     '</div>';
 }
 
-// ===== STATS =====
 function updateStats() {
   const total = monitors.length;
   const up = monitors.filter(m => m.status === 'up').length;
@@ -221,7 +210,6 @@ function updateStats() {
   renderActiveIncidents();
 }
 
-// ===== DEGRADATION ALERTS =====
 function renderDegradationAlerts() {
   const el = document.getElementById('degradation-list');
   const degraded = monitors.filter(m => m.status === 'degraded');
@@ -241,7 +229,6 @@ function renderDegradationAlerts() {
   }).join('');
 }
 
-// ===== ACTIVE INCIDENTS =====
 function renderActiveIncidents() {
   const el = document.getElementById('incidents-list');
   const active = incidents.filter(i => i.status !== 'resolved');
@@ -260,7 +247,6 @@ function renderActiveIncidents() {
   }).join('');
 }
 
-// ===== INCIDENT TIMELINE =====
 function renderIncidentTimeline() {
   const el = document.getElementById('incident-timeline');
   if (!el) return;
@@ -278,7 +264,6 @@ function renderIncidentTimeline() {
   ).join('') + '</div>';
 }
 
-// ===== SSL =====
 function renderSSLList() {
   const el = document.getElementById('ssl-list');
   if (!el) return;
@@ -299,7 +284,6 @@ function renderSSLList() {
   }).join('');
 }
 
-// ===== SLA =====
 function renderSLAReport() {
   const el = document.getElementById('sla-monitors-list');
   if (!el) return;
@@ -312,7 +296,6 @@ function renderSLAReport() {
   }).join('');
 }
 
-// ===== ADD MONITOR =====
 function openAddMonitor() { document.getElementById('add-monitor-modal').classList.add('open'); }
 function closeAddMonitor() {
   document.getElementById('add-monitor-modal').classList.remove('open');
@@ -329,7 +312,6 @@ async function handleAddMonitor(e) {
   if (!name || !url) { document.getElementById('monitor-error').textContent = 'Name and URL required'; return; }
   try {
     const m = await api('POST', '/monitors', { name, url, type: 'http', interval });
-    // Server returns the created monitor; add uptime bars for UI
     m.history = Array.from({ length: 30 }, () => 1);
     monitors.push(m);
   } catch (ex) {
@@ -340,7 +322,6 @@ async function handleAddMonitor(e) {
   toast('Monitor added', 'success');
 }
 
-// ===== API CHAIN =====
 function openAddChain() { document.getElementById('add-chain-modal').classList.add('open'); }
 function closeAddChain() {
   document.getElementById('add-chain-modal').classList.remove('open');
@@ -376,7 +357,6 @@ async function handleAddChain(e) {
   toast('Chain created', 'success');
 }
 
-// ===== SSL MODAL =====
 function openAddSSL() { document.getElementById('add-ssl-modal').classList.add('open'); }
 function closeAddSSL() {
   document.getElementById('add-ssl-modal').classList.remove('open');
@@ -394,7 +374,6 @@ async function handleAddSSL(e) {
   toast('Domain added', 'success');
 }
 
-// ===== DELETE =====
 async function deleteMonitor(id) {
   try { await api('DELETE', '/monitors?id=' + id); } catch {}
   monitors = monitors.filter(m => m.id !== id);
@@ -402,7 +381,6 @@ async function deleteMonitor(id) {
   toast('Monitor deleted');
 }
 
-// ===== UTIL =====
 function esc(s) {
   const d = document.createElement('div');
   d.textContent = s;
@@ -418,7 +396,6 @@ function toast(msg, type) {
   setTimeout(() => { el.classList.add('fade-out'); setTimeout(() => el.remove(), 150); }, 2500);
 }
 
-// ===== PROFILE =====
 async function loadProfile() {
   if (!currentUser) {
     try { currentUser = await api('GET', '/me'); }
@@ -488,7 +465,6 @@ async function handleProfileUpdate(e) {
   }
 }
 
-// ===== DELETE ACCOUNT =====
 async function handleDeleteAccount() {
   if (!confirm('Are you sure you want to permanently delete your account? This cannot be undone.')) return;
   try {
@@ -505,7 +481,6 @@ async function handleDeleteAccount() {
   }
 }
 
-// ===== INIT =====
 (function() {
   const token = localStorage.getItem('token');
   if (token) showPage('dashboard');
@@ -513,7 +488,6 @@ async function handleDeleteAccount() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeAddMonitor(); closeAddChain(); closeAddSSL(); }
   });
-  // Dynamic copyright year
   document.querySelectorAll('.footer-year').forEach(el => {
     el.textContent = new Date().getFullYear();
   });

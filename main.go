@@ -14,13 +14,12 @@ import (
 )
 
 func main() {
-	// Config (use env vars in production)
+
 	port := envOr("PORT", "8080")
 	jwtSecret := envOr("JWT_SECRET", "change-me-to-a-real-secret-in-production")
 	dbPath := envOr("DB_PATH", "saas.db")
 	allowedOrigins := envOr("ALLOWED_ORIGINS", "*")
 
-	// Security warnings
 	if jwtSecret == "change-me-to-a-real-secret-in-production" {
 		log.Println("WARNING: Using default JWT secret. Set JWT_SECRET env var in production.")
 	}
@@ -28,33 +27,26 @@ func main() {
 		log.Println("WARNING: CORS allows all origins. Set ALLOWED_ORIGINS env var in production.")
 	}
 
-	// Initialize store
 	db, err := store.New(dbPath)
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	defer db.Close()
 
-	// Initialize auth service
 	authSvc := auth.NewService(jwtSecret, 24*time.Hour)
 
-	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authSvc, db)
 	apiHandler := handlers.NewAPIHandler(db)
 
-	// Auth middleware
 	requireAuth := middleware.Auth(authSvc, db)
 	requirePro := middleware.RequirePlan("pro", "enterprise")
 
-	// Setup routes
 	mux := http.NewServeMux()
 
-	// Public routes
 	mux.HandleFunc("GET /health", handlers.HealthCheck)
 	mux.HandleFunc("POST /api/v1/auth/signup", authHandler.Signup)
 	mux.HandleFunc("POST /api/v1/auth/login", authHandler.Login)
 
-	// Protected routes (any authenticated user)
 	mux.Handle("GET /api/v1/me", middleware.Chain(
 		http.HandlerFunc(apiHandler.GetProfile),
 		requireAuth,
@@ -76,7 +68,6 @@ func main() {
 		requireAuth,
 	))
 
-	// API Key management
 	mux.Handle("POST /api/v1/keys", middleware.Chain(
 		http.HandlerFunc(apiHandler.CreateAPIKey),
 		requireAuth,
@@ -90,7 +81,6 @@ func main() {
 		requireAuth,
 	))
 
-	// Monitor management
 	mux.Handle("POST /api/v1/monitors", middleware.Chain(
 		http.HandlerFunc(apiHandler.CreateMonitor),
 		requireAuth,
@@ -104,7 +94,6 @@ func main() {
 		requireAuth,
 	))
 
-	// Pro-only routes (example gated feature)
 	mux.Handle("GET /api/v1/pro/analytics", middleware.Chain(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
@@ -114,21 +103,18 @@ func main() {
 		requirePro,
 	))
 
-	// Serve frontend static files
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("frontend"))))
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "frontend/index.html")
 	})
 
-	// Global middleware stack
 	handler := middleware.Chain(mux,
 		middleware.CORS(allowedOrigins),
 		middleware.RateLimit(120),
 		middleware.Logging,
 	)
 
-	// Start server
-	fmt.Println(banner)
+	fmt.Print(banner)
 	log.Printf("Watchtower API running on http://localhost:%s", port)
 	log.Printf("Endpoints:")
 	log.Printf("   POST   /api/v1/auth/signup   - Create account")

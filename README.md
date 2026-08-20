@@ -36,7 +36,9 @@ go build -o watchtower .
 ./watchtower
 ```
 
-Open http://localhost:8080
+Open [http://localhost:8080](http://localhost:8080)
+
+**Access from phone (same WiFi):** [http://192.168.1.96:8080](http://192.168.1.96:8080)
 
 ## Environment variables
 
